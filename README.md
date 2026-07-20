@@ -4,7 +4,7 @@
 用對照組算**增量**，並列天真 ROI 揭露高估幅度，找出「推了反而虧」的族群，
 並以退訂成本敏感度分析檢驗結論是否翻盤。
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## 功能特色 【必要】
@@ -42,10 +42,15 @@ scripts/download_data.py   # 資料下載 + 校驗（冪等）
 sql/00–05_*.sql            # 編號即執行順序；每檔註解對應規劃書 Q1/Q2/Q3
 src/params.py              # 商業假設集中地——改參數不改邏輯
 src/stats.py               # z 檢定 / Welch t / bootstrap CI / MDE
+src/analysis.py            # 整體增量 / 分群增量
 src/roi.py                 # ROI 模型 + 退訂率敏感度掃描
-src/run_pipeline.py        # 一鍵：SQL → 統計 → ROI → REPORT.md
+src/figures.py             # 五張圖表（dataviz skill 色票）
+src/report.py              # 組出 reports/REPORT.md
+src/run_pipeline.py        # 一鍵：SQL → 統計 → ROI → 圖表 → REPORT.md
 reports/REPORT.md          # 主交付物（產物，勿手改）
 ```
+
+模組職責與資料流細節 → `docs/ARCHITECTURE.md`
 
 ## 測試 【必要】
 
@@ -54,6 +59,13 @@ reports/REPORT.md          # 主交付物（產物，勿手改）
 ```
 
 ## 版本歷史 【必要】
+
+### v1.0.0 (2026-07-20)
+
+- **P0–P4 完整交付** — 隨機性檢核（SRM）、漏斗與整體增量、天真 vs 增量 ROI、
+  分群增量、退訂成本敏感度、五張圖表、`reports/REPORT.md`
+- 主要結論：兩組推播增量 ROI 45.2x／24.5x（天真 ROI 高估 1.85×／2.54×）；
+  臨界退訂率 10.8%／5.9%，遠高於業界常見退訂率，結論穩健
 
 ### v0.1.0 (2026-07-20)
 
@@ -69,3 +81,4 @@ MIT License
 
 - 完整規劃書（商業觀念、Phase、出口條件）→ `prepare.md` 頂部連結
 - 決策記錄 → `prepare.md`（前綴 `PC-`）
+- 系統架構、模組職責、資料流 → `docs/ARCHITECTURE.md`
