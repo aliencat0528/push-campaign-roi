@@ -14,6 +14,7 @@ from pathlib import Path
 
 import duckdb
 
+import analysis
 import stats
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -48,6 +49,20 @@ def printBalance(conn):
     print(balance.to_string(index=False))
 
 
+def printOverallLift(conn):
+    funnel = conn.execute("SELECT * FROM t02Funnel").fetchdf()
+    print("[fnl ] 各組漏斗：")
+    print(funnel.to_string(index=False))
+    for arm, r in analysis.overallLift(conn).items():
+        s = r["spend"]
+        print(
+            f"[lift] {arm} vs 對照：visit +{r['visit']['diff']:.2%} (p={r['visit']['pValue']:.2e}) · "
+            f"conversion +{r['conversion']['diff']:.2%} (p={r['conversion']['pValue']:.2e}) · "
+            f"spend/人 +${s['diff']:.4f} [95% CI {s['ciLow']:.4f}, {s['ciHigh']:.4f}] "
+            f"(bootstrap [{s['bootCiLow']:.4f}, {s['bootCiHigh']:.4f}], p={s['pValue']:.2e})"
+        )
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--from", dest="fromStage", default="00", help="從此編號起重跑 SQL")
@@ -65,7 +80,8 @@ def main():
 
     checkSrm(conn)
     printBalance(conn)
-    print("[done] P1 檢核完成（漏斗與增量見 P2）")
+    printOverallLift(conn)
+    print("[done] P2 完成（分群與 ROI 見 P3）")
 
 
 if __name__ == "__main__":
