@@ -15,6 +15,7 @@ from pathlib import Path
 import duckdb
 
 import analysis
+import roi
 import stats
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -49,11 +50,11 @@ def printBalance(conn):
     print(balance.to_string(index=False))
 
 
-def printOverallLift(conn):
+def printOverallLift(conn, overall):
     funnel = conn.execute("SELECT * FROM t02Funnel").fetchdf()
     print("[fnl ] 各組漏斗：")
     print(funnel.to_string(index=False))
-    for arm, r in analysis.overallLift(conn).items():
+    for arm, r in overall.items():
         s = r["spend"]
         print(
             f"[lift] {arm} vs 對照：visit +{r['visit']['diff']:.2%} (p={r['visit']['pValue']:.2e}) · "
@@ -80,8 +81,30 @@ def main():
 
     checkSrm(conn)
     printBalance(conn)
-    printOverallLift(conn)
-    print("[done] P2 完成（分群與 ROI 見 P3）")
+    overall = analysis.overallLift(conn)  # 含 bootstrap，算一次重複使用（P2 展示 + P3 ROI）
+    printOverallLift(conn, overall)
+    printSegmentsAndRoi(conn, overall)
+    print("[done] P3 完成（REPORT.md 見 P4）")
+
+
+def printSegmentsAndRoi(conn, overall):
+    print("[seg ] 分群增量（合併實驗組 vs 對照，spend/人）：")
+    for s in analysis.segmentLift(conn):
+        t = s["spend"]
+        flag = "  " if s["significant"] else "△ "  # △ = CI 跨零，不下定論
+        print(
+            f"  {flag}{s['dim']}={s['dimValue']:<12} +${t['diff']:.4f} "
+            f"[{t['ciLow']:.4f}, {t['ciHigh']:.4f}] · MDE ${t['mde']:.4f} · n={s['nTreated']:,}"
+        )
+    summary = roi.roiSummary(overall)
+    print(f"[roi ] 單用戶年觸達價值（合併推導）：${summary['reachValue']:.2f}")
+    for arm, r in summary["arms"].items():
+        lo, hi = r["incProfitCi"]
+        print(
+            f"[roi ] {arm}：增量利潤 ${r['incProfit']:,.0f} [{lo:,.0f}, {hi:,.0f}] · "
+            f"增量 ROI {r['incRoi']:.1f}x · 天真 ROI {r['naiveRoi']:.1f}x"
+            f"（人均高估 {r['overstatement']:.2f}×）· 臨界退訂率 {r['breakEvenOptOut']:.2%}"
+        )
 
 
 if __name__ == "__main__":
