@@ -5,6 +5,10 @@ import stats
 CONTROL = "No E-Mail"
 TREATMENT_ARMS = ["Mens E-Mail", "Womens E-Mail"]
 
+# 維度固定顯示順序——DuckDB GROUP BY 列序不保證跨執行一致，
+# 若沿用查詢原序，REPORT.md 每次重跑條列順序會浮動（產物與程式碼脫鉤）。
+DIM_ORDER = {"recency": 0, "historySegment": 1, "newbie": 2, "channel": 3}
+
 
 def fetchArms(conn):
     rows = conn.execute(
@@ -83,4 +87,6 @@ def segmentLift(conn):
             ),
             "significant": not (test["ciLow"] <= 0 <= test["ciHigh"]),
         })
+    # 固定排序保證重跑可重現：先依維度固定序，維度內依增量遞減
+    results.sort(key=lambda r: (DIM_ORDER.get(r["dim"], 99), -r["spend"]["diff"]))
     return results

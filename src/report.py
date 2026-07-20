@@ -53,10 +53,12 @@ def buildReport(conn, overall, segments, roiSummary, figPaths):
         f"+\\${bestSeg['spend']['diff']:.2f} `[{bestSeg['spend']['ciLow']:.2f}, "
         f"{bestSeg['spend']['ciHigh']:.2f}]`——見下方分群圖 |"
     )
+    breakEvens = "、".join(
+        f"{ARM_LABEL[a]} {r['breakEvenOptOut']:.1%}" for a, r in roiSummary["arms"].items()
+    )
     w(
         f"| Q3 | 退訂會不會讓 ROI 翻盤？ | **不會，在合理假設下**——兩組臨界退訂率 "
-        + "、".join(f"{ARM_LABEL[a]} {r['breakEvenOptOut']:.1%}" for a, r in roiSummary["arms"].items())
-        + f"，遠高於業界常見退訂率（通常 <1%） |"
+        f"{breakEvens}，遠高於業界常見退訂率（通常 <1%） |"
     )
     w("\n---\n")
 
