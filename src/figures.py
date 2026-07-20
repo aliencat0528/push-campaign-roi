@@ -9,6 +9,7 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+import matplotlib.font_manager
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
@@ -27,6 +28,14 @@ GRAY_CONTROL = "#898781"  # 對照組——基準線，故意用中性色不用�
 
 ARM_COLORS = {"Mens E-Mail": BLUE, "Womens E-Mail": MAGENTA, "No E-Mail": GRAY_CONTROL}
 
+# 繁中字型：matplotlib 預設 sans-serif 不含中文字形（render 成方框），
+# 用系統內建 PingFang TC；非 macOS 環境找不到就退回預設並印警告，不讓 pipeline 中止。
+_CJK_FALLBACKS = ["PingFang TC", "Heiti TC", "Noto Sans TC", "Microsoft JhengHei"]
+_available = {f.name for f in matplotlib.font_manager.fontManager.ttflist}
+_cjkFont = next((f for f in _CJK_FALLBACKS if f in _available), None)
+if _cjkFont is None:
+    print(f"[fig ] 警告：找不到中文字型（嘗試過 {_CJK_FALLBACKS}），圖表中文可能顯示為方框")
+
 plt.rcParams.update({
     "figure.facecolor": SURFACE,
     "axes.facecolor": SURFACE,
@@ -38,6 +47,8 @@ plt.rcParams.update({
     "grid.color": GRIDLINE,
     "font.size": 11,
     "font.family": "sans-serif",
+    "font.sans-serif": [_cjkFont] if _cjkFont else ["sans-serif"],
+    "axes.unicode_minus": False,  # CJK 字型的 unicode 負號常缺字形，退回 ASCII "-"
     "savefig.facecolor": SURFACE,
 })
 

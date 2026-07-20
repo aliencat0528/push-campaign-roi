@@ -15,6 +15,8 @@ from pathlib import Path
 import duckdb
 
 import analysis
+import figures
+import report
 import roi
 import stats
 
@@ -83,13 +85,15 @@ def main():
     printBalance(conn)
     overall = analysis.overallLift(conn)  # 含 bootstrap，算一次重複使用（P2 展示 + P3 ROI）
     printOverallLift(conn, overall)
-    printSegmentsAndRoi(conn, overall)
-    print("[done] P3 完成（REPORT.md 見 P4）")
+    segments, roiSummary = printSegmentsAndRoi(conn, overall)
+    reportPath = renderReport(conn, overall, segments, roiSummary)
+    print(f"[done] P4 完成：{reportPath}")
 
 
 def printSegmentsAndRoi(conn, overall):
+    segments = analysis.segmentLift(conn)
     print("[seg ] 分群增量（合併實驗組 vs 對照，spend/人）：")
-    for s in analysis.segmentLift(conn):
+    for s in segments:
         t = s["spend"]
         flag = "  " if s["significant"] else "△ "  # △ = CI 跨零，不下定論
         print(
@@ -105,6 +109,20 @@ def printSegmentsAndRoi(conn, overall):
             f"增量 ROI {r['incRoi']:.1f}x · 天真 ROI {r['naiveRoi']:.1f}x"
             f"（人均高估 {r['overstatement']:.2f}×）· 臨界退訂率 {r['breakEvenOptOut']:.2%}"
         )
+    return segments, summary
+
+
+def renderReport(conn, overall, segments, roiSummary):
+    funnelDf = conn.execute("SELECT * FROM t02Funnel").fetchdf()
+    figPaths = {
+        "funnel": figures.plotFunnel(funnelDf),
+        "overallLift": figures.plotOverallLift(overall),
+        "roiComparison": figures.plotRoiComparison(roiSummary),
+        "segmentLift": figures.plotSegmentLift(segments),
+        "optOut": figures.plotOptOutSensitivity(roiSummary),
+    }
+    print(f"[fig ] 五張圖表輸出至 {figures.FIG_DIR}")
+    return report.buildReport(conn, overall, segments, roiSummary, figPaths)
 
 
 if __name__ == "__main__":
