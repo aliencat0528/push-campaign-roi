@@ -1,5 +1,6 @@
 # Prepare — push-campaign-roi 決策記錄
 
+> **版本**：PC-003 · 2026-07-20
 > 記錄規則繼承根 `prepare.md`，此處只寫差異。編號前綴 `PC-`。
 > 完整規劃書（商業問題、必備商業觀念、架構、Phase、人為接軌點）：
 > https://claude.ai/code/artifact/e8630533-fe91-4112-aacc-a1d982760cc1
